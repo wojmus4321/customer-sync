@@ -1,13 +1,10 @@
 package codingdojo;
 
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 
-import java.util.Arrays;
+import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 
 public class CustomerSyncTest {
@@ -22,8 +19,8 @@ public class CustomerSyncTest {
         Customer customer = createCustomerWithSameCompanyAs(externalCustomer);
         customer.setExternalId(externalId);
 
-        CustomerDataLayer db = mock(CustomerDataLayer.class);
-        when(db.findByExternalId(externalId)).thenReturn(customer);
+        CustomerDataLayer db = new InMemoryCustomerDataLayer();
+        db.createCustomerRecord(customer);
         CustomerSync sut = new CustomerSync(db);
 
         // ACT
@@ -31,9 +28,7 @@ public class CustomerSyncTest {
 
         // ASSERT
         assertFalse(created);
-        ArgumentCaptor<Customer> argument = ArgumentCaptor.forClass(Customer.class);
-        verify(db, atLeastOnce()).updateCustomerRecord(argument.capture());
-        Customer updatedCustomer = argument.getValue();
+        Customer updatedCustomer = db.findByExternalId(externalCustomer.getExternalId());
         assertEquals(externalCustomer.getName(), updatedCustomer.getName());
         assertEquals(externalCustomer.getExternalId(), updatedCustomer.getExternalId());
         assertNull(updatedCustomer.getMasterExternalId());
@@ -51,7 +46,7 @@ public class CustomerSyncTest {
         externalCustomer.setName("Acme Inc.");
         externalCustomer.setAddress(new Address("123 main st", "Helsingborg", "SE-123 45"));
         externalCustomer.setCompanyNumber("470813-8895");
-        externalCustomer.setShoppingLists(Arrays.asList(new ShoppingList("lipstick", "blusher")));
+        externalCustomer.setShoppingLists(Collections.singletonList(new ShoppingList("lipstick", "blusher")));
         return externalCustomer;
     }
 
