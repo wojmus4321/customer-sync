@@ -5,19 +5,30 @@ import java.util.Collection;
 
 public class CustomerMatches {
 
+    public void matchesByExternalId(Customer matchByExternalId) {
+        this.matchTerm = MatchTerm.EXTERNAL_ID;
+        this.customer = matchByExternalId;
+    }
+
+    public void matchesByCompanyNumber(Customer matchByCompanyNumber) {
+        this.matchTerm = MatchTerm.COMPANY_NUMBER;
+        this.customer = matchByCompanyNumber;
+    }
+
+    public void matchesNone() {
+        this.matchTerm = null;
+        this.customer = null;
+    }
+
     public enum MatchTerm {
         EXTERNAL_ID, COMPANY_NUMBER
     }
-    private Collection<Customer> duplicates = new ArrayList<>();
+    private final Collection<Customer> duplicates = new ArrayList<>();
     private MatchTerm matchTerm;
     private Customer customer;
 
     public Customer getCustomer() {
         return customer;
-    }
-
-    public boolean hasDuplicates() {
-        return !duplicates.isEmpty();
     }
 
     public void addDuplicate(Customer duplicate) {
@@ -34,13 +45,5 @@ public class CustomerMatches {
 
     public boolean isMatchingByCompanyNumber() {
         return matchTerm == MatchTerm.COMPANY_NUMBER;
-    }
-
-    public void setMatchTerm(MatchTerm matchTerm) {
-        this.matchTerm = matchTerm;
-    }
-
-    public void setCustomer(Customer customer) {
-        this.customer = customer;
     }
 }

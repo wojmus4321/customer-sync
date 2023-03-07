@@ -1,5 +1,7 @@
 package codingdojo;
 
+import java.util.Collection;
+
 public class CustomerDataAccess {
 
     private final CustomerDataLayer customerDataLayer;
@@ -8,44 +10,53 @@ public class CustomerDataAccess {
         this.customerDataLayer = customerDataLayer;
     }
 
-    public CustomerMatches loadCompanyCustomer(String externalId, String companyNumber) {
-        CustomerMatches matches = new CustomerMatches();
+    public CustomerMatches loadPerson(ExternalCustomer externalCustomer) {
+        final String externalId = externalCustomer.getExternalId();
         Customer matchByExternalId = this.customerDataLayer.findByExternalId(externalId);
+
+        CustomerMatches matches = new CustomerMatches();
         if (matchByExternalId != null) {
-            matches.setCustomer(matchByExternalId);
-            matches.setMatchTerm(CustomerMatches.MatchTerm.EXTERNAL_ID);
+            matches.matchesByExternalId(matchByExternalId);
+        }
+
+        return matches;
+    }
+
+    public CustomerMatches loadCompany(ExternalCustomer externalCustomer) {
+        final String externalId = externalCustomer.getExternalId();
+        final String companyNumber = externalCustomer.getCompanyNumber();
+        Customer matchByExternalId = this.customerDataLayer.findByExternalId(externalId);
+
+        CustomerMatches matches = new CustomerMatches();
+        if (matchByExternalId != null) {
+            matches.matchesByExternalId(matchByExternalId);
             Customer matchByMasterId = this.customerDataLayer.findByMasterExternalId(externalId);
-            if (matchByMasterId != null) matches.addDuplicate(matchByMasterId);
+            if (matchByMasterId != null) {
+                matches.addDuplicate(matchByMasterId);
+            }
         } else {
             Customer matchByCompanyNumber = this.customerDataLayer.findByCompanyNumber(companyNumber);
             if (matchByCompanyNumber != null) {
-                matches.setCustomer(matchByCompanyNumber);
-                matches.setMatchTerm(CustomerMatches.MatchTerm.COMPANY_NUMBER);
+                matches.matchesByCompanyNumber(matchByCompanyNumber);
             }
         }
 
         return matches;
     }
 
-    public CustomerMatches loadPersonCustomer(String externalId) {
-        CustomerMatches matches = new CustomerMatches();
-        Customer matchByPersonalNumber = this.customerDataLayer.findByExternalId(externalId);
-        matches.setCustomer(matchByPersonalNumber);
-        if (matchByPersonalNumber != null) matches.setMatchTerm(CustomerMatches.MatchTerm.EXTERNAL_ID);
-        return matches;
+    public Customer save(Customer customer) {
+        return customer.getInternalId() != null ?
+                customerDataLayer.updateCustomerRecord(customer) :
+                customerDataLayer.createCustomerRecord(customer);
     }
 
-    public Customer updateCustomerRecord(Customer customer) {
-        return customerDataLayer.updateCustomerRecord(customer);
-    }
-
-    public Customer createCustomerRecord(Customer customer) {
-        return customerDataLayer.createCustomerRecord(customer);
-    }
-
-    public void updateShoppingList(Customer customer, ShoppingList consumerShoppingList) {
-        customer.addShoppingList(consumerShoppingList);
-        customerDataLayer.updateShoppingList(consumerShoppingList);
-        customerDataLayer.updateCustomerRecord(customer);
+    public void save(Collection<Customer> customers) {
+        for (Customer customer : customers) {
+            if (customer.getInternalId() != null) {
+                customerDataLayer.updateCustomerRecord(customer);
+            } else {
+                customerDataLayer.createCustomerRecord(customer);
+            }
+        }
     }
 }

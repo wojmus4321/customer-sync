@@ -5,11 +5,9 @@ import java.util.*;
 public class InMemoryCustomerDataLayer implements CustomerDataLayer {
 
     private final Map<String, Customer> customers;
-    private final List<ShoppingList> shoppingLists;
 
     public InMemoryCustomerDataLayer() {
         this.customers = new HashMap<>();
-        this.shoppingLists = new ArrayList<>();
     }
 
     @Override
@@ -23,11 +21,6 @@ public class InMemoryCustomerDataLayer implements CustomerDataLayer {
         customer.setInternalId(UUID.randomUUID().toString());
         customers.put(customer.getInternalId(), customer);
         return customer;
-    }
-
-    @Override
-    public void updateShoppingList(ShoppingList consumerShoppingList) {
-        shoppingLists.add(consumerShoppingList);
     }
 
     @Override
