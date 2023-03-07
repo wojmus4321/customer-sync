@@ -20,6 +20,14 @@ public class CustomerAssert extends AbstractAssert<CustomerAssert, Customer> {
         return this;
     }
 
+    public CustomerAssert isPerson() {
+        isNotNull();
+        if (actual.getCustomerType() != CustomerType.PERSON) {
+            failWithMessage("Expected customer to be a person, but was %s", actual.getCustomerType());
+        }
+        return this;
+    }
+
     public CustomerAssert hasEmptyMasterExternalId() {
         isNotNull();
         if (actual.getMasterExternalId() != null) {

@@ -13,4 +13,6 @@ public interface CustomerDataLayer {
     Customer findByMasterExternalId(String externalId);
 
     Customer findByCompanyNumber(String companyNumber);
+
+    long countCustomers();
 }

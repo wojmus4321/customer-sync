@@ -3,13 +3,14 @@ package codingdojo;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import java.util.Collections;
-
 import static codingdojo.CustomerAssert.assertThat;
+import static codingdojo.TestData.*;
 
 
+@DisplayName("Customer sync tests")
 public class CustomerSyncTest {
 
     private CustomerDataLayer db;
@@ -21,52 +22,241 @@ public class CustomerSyncTest {
         sut = new CustomerSync(db);
     }
 
-    @Test
-    @DisplayName("Case1: " +
-            "given external company customer and existing company customer matching by externalId " +
-            "when sync is performed " +
-            "then existing company customer is updated with external company customer data correctly")
-    public void syncCompanyByExternalId() {
-        // given
+    @Nested
+    @DisplayName("Person Customer cases")
+    class PersonCustomer {
+        @Test
+        @DisplayName("" +
+                "given external person customer and no existing matching customer, " +
+                "when sync is performed, " +
+                "then 1 new customer record is created")
+        public void case1() {
+            // given
+            ExternalCustomer externalCustomer = anExternalPerson();
+            long beforeCount = db.countCustomers();
 
-        String externalId = "12345";
+            // when
+            boolean created = sut.syncWithDataLayer(externalCustomer);
 
-        ExternalCustomer externalCustomer = createExternalCompany(externalId);
-        Customer customer = createCustomerWithSameCompanyAs(externalCustomer);
+            // then
+            Assertions.assertThat(db.countCustomers() - beforeCount).isEqualTo(1L);
+            Assertions.assertThat(created).isTrue();
+            Customer updatedCustomer = db.findByExternalId(externalCustomer.getExternalId());
 
-        db.createCustomerRecord(customer);
+            assertThat(updatedCustomer)
+                    .isPerson()
+                    .wasUpdatedFrom(externalCustomer);
+        }
 
-        // when
-        boolean created = sut.syncWithDataLayer(externalCustomer);
+        @Test
+        @DisplayName("" +
+                "given external person customer and existing matching person customer by externalId, " +
+                "when sync is performed, " +
+                "then 1 customer record is updated")
+        public void case2() {
+            // given
+            ExternalCustomer externalCustomer = anExternalPerson();
+            Customer matchingCustomer = personCustomerMatchingByExternalId(externalCustomer);
+            db.createCustomerRecord(matchingCustomer);
+            long beforeCount = db.countCustomers();
 
-        // then
-        Assertions.assertThat(created).isFalse();
-        Customer updatedCustomer = db.findByExternalId(externalCustomer.getExternalId());
+            // when
+            boolean created = sut.syncWithDataLayer(externalCustomer);
 
-        assertThat(updatedCustomer)
-                .isCompany()
-                .hasEmptyMasterExternalId()
-                .wasUpdatedFrom(externalCustomer);
+            // then
+            Assertions.assertThat(db.countCustomers() - beforeCount).isEqualTo(0L);
+            Assertions.assertThat(created).isFalse();
+            Customer updatedCustomer = db.findByExternalId(externalCustomer.getExternalId());
+
+            assertThat(updatedCustomer)
+                    .isPerson()
+                    .wasUpdatedFrom(externalCustomer);
+        }
+
+        @Test
+        @DisplayName("" +
+                "given external person customer and existing matching company customer by externalId, " +
+                "when sync is performed, " +
+                "then ConflictException is thrown")
+        public void case3() {
+            // given
+            ExternalCustomer externalCustomer = anExternalPerson();
+            Customer matchingCustomer = companyCustomerMatchingByExternalIdAndCompanyNumber(externalCustomer);
+            db.createCustomerRecord(matchingCustomer);
+
+            // then
+            org.junit.jupiter.api.Assertions.assertThrows(ConflictException.class, () -> sut.syncWithDataLayer(externalCustomer));
+
+        }
     }
 
+    @Nested
+    @DisplayName("Company Customer cases")
+    class CompanyCustomer {
 
-    private ExternalCustomer createExternalCompany(String externalId) {
-        ExternalCustomer externalCustomer = new ExternalCustomer();
-        externalCustomer.setExternalId(externalId);
-        externalCustomer.setName("Acme Inc.");
-        externalCustomer.setAddress(new Address("123 main st", "Helsingborg", "SE-123 45"));
-        externalCustomer.setCompanyNumber("470813-8895");
-        externalCustomer.setShoppingLists(Collections.singletonList(new ShoppingList("lipstick", "blusher")));
-        return externalCustomer;
+        @Test
+        @DisplayName("" +
+                "given external company customer and no existing matching customer, " +
+                "when sync is performed, " +
+                "then 1 new customer record is created")
+        public void case1() {
+            // given
+            ExternalCustomer externalCustomer = anExternalCompany();
+            long beforeCount = db.countCustomers();
+
+            // when
+            boolean created = sut.syncWithDataLayer(externalCustomer);
+
+            // then
+            Assertions.assertThat(db.countCustomers() - beforeCount).isEqualTo(1L);
+            Assertions.assertThat(created).isTrue();
+            Customer updatedCustomer = db.findByExternalId(externalCustomer.getExternalId());
+
+            assertThat(updatedCustomer)
+                    .isCompany()
+                    .wasUpdatedFrom(externalCustomer);
+        }
+
+        @Test
+        @DisplayName("" +
+                "given external company customer and existing company customer matching by externalId and companyNumber, " +
+                "when sync is performed, " +
+                "then 1 customer record is updated")
+        public void case2() {
+            // given
+            ExternalCustomer externalCustomer = anExternalCompany();
+            Customer matchingCustomer = companyCustomerMatchingByExternalIdAndCompanyNumber(externalCustomer);
+            db.createCustomerRecord(matchingCustomer);
+            long beforeCount = db.countCustomers();
+
+            // when
+            boolean created = sut.syncWithDataLayer(externalCustomer);
+
+            // then
+            Assertions.assertThat(db.countCustomers() - beforeCount).isEqualTo(0L);
+            Assertions.assertThat(created).isFalse();
+            Customer updatedCustomer = db.findByExternalId(externalCustomer.getExternalId());
+
+            assertThat(updatedCustomer)
+                    .isCompany()
+                    .hasEmptyMasterExternalId()
+                    .wasUpdatedFrom(externalCustomer);
+        }
+
+        @Test
+        @DisplayName("" +
+                "given external company customer and existing matching company customer by externalId, but not companyNumber, " +
+                "when sync is performed, " +
+                "then 1 customer record is created and 1 customer duplicate record is updated")
+        public void case3() {
+            // given
+            ExternalCustomer externalCustomer = anExternalCompany();
+            Customer matchingCustomer = companyCustomerMatchingByExternalIdAndDifferentCompanyNumber(externalCustomer);
+            db.createCustomerRecord(matchingCustomer);
+            long beforeCount = db.countCustomers();
+
+            // when
+            boolean created = sut.syncWithDataLayer(externalCustomer);
+            long afterCount = db.countCustomers();
+
+            // then
+            Assertions.assertThat(afterCount - beforeCount).isEqualTo(1L);
+            Assertions.assertThat(created).isTrue();
+            Customer updatedCustomer = db.findByCompanyNumber(externalCustomer.getCompanyNumber());
+
+            assertThat(updatedCustomer)
+                    .isCompany()
+                    .wasUpdatedFrom(externalCustomer);
+
+            Customer createdCustomer = db.findByCompanyNumber(matchingCustomer.getCompanyNumber());
+
+            assertThat(createdCustomer)
+                    .isCompany();
+        }
+
+        @Test
+        @DisplayName("" +
+                "given external company customer and existing matching company customer by companyNumber, but not externalId, " +
+                "when sync is performed, " +
+                "then ConflictException is thrown")
+        public void case4() {
+            // given
+            ExternalCustomer externalCustomer = anExternalCompany();
+            Customer matchingCustomer = companyCustomerMatchingByCompanyNumberButDifferentExternalId(externalCustomer);
+            db.createCustomerRecord(matchingCustomer);
+
+            // then
+            org.junit.jupiter.api.Assertions.assertThrows(ConflictException.class, () -> sut.syncWithDataLayer(externalCustomer));
+        }
+
+        @Test
+        @DisplayName("" +
+                "given external company customer and existing matching person customer by externalId, " +
+                "when sync is performed, " +
+                "then ConflictException is thrown")
+        public void case5() {
+            // given
+            ExternalCustomer externalCustomer = anExternalCompany();
+            Customer matchingCustomer = personCustomerMatchingByExternalId(externalCustomer);
+            db.createCustomerRecord(matchingCustomer);
+
+            // then
+            org.junit.jupiter.api.Assertions.assertThrows(ConflictException.class, () -> sut.syncWithDataLayer(externalCustomer));
+
+        }
+
+        @Test
+        @DisplayName("" +
+                "given external company customer and existing matching company customer by externalId and masterExternalId, " +
+                "when sync is performed, " +
+                "then 1 customer record is updated")
+        public void case6() {
+            // given
+            ExternalCustomer externalCustomer = anExternalCompany();
+            Customer matchingCustomer = companyCustomerMatchingByExternalIdAndMasterExternalId(externalCustomer);
+            db.createCustomerRecord(matchingCustomer);
+            long beforeCount = db.countCustomers();
+
+            // when
+            boolean created = sut.syncWithDataLayer(externalCustomer);
+
+            // then
+            Assertions.assertThat(db.countCustomers() - beforeCount).isEqualTo(0L);
+            Assertions.assertThat(created).isFalse();
+            Customer updatedCustomer = db.findByExternalId(externalCustomer.getExternalId());
+
+            assertThat(updatedCustomer)
+                    .isCompany()
+                    .wasUpdatedFrom(externalCustomer);
+
+        }
+
+        @Test
+        @DisplayName("" +
+                "given external company customer and existing matching company customer by companyNumber with null externalId, " +
+                "when sync is performed, " +
+                "then 1 customer record is created and 1 duplicate record is updated")
+        public void case7() {
+            // given
+            ExternalCustomer externalCustomer = anExternalCompany();
+            Customer matchingCustomer = companyCustomerMatchingByCompanyNumberAndNullExternalId(externalCustomer);
+            db.createCustomerRecord(matchingCustomer);
+            long beforeCount = db.countCustomers();
+
+            // when
+            boolean created = sut.syncWithDataLayer(externalCustomer);
+
+            // then
+            Assertions.assertThat(db.countCustomers() - beforeCount).isEqualTo(1L);
+            Assertions.assertThat(created).isFalse();
+            Customer updatedCustomer = db.findByCompanyNumber(externalCustomer.getCompanyNumber());
+
+            assertThat(updatedCustomer)
+                    .isCompany()
+                    .wasUpdatedFrom(externalCustomer);
+
+        }
+
+
     }
-
-    private Customer createCustomerWithSameCompanyAs(ExternalCustomer externalCustomer) {
-        Customer customer = new Customer();
-        customer.setCompanyNumber(externalCustomer.getCompanyNumber());
-        customer.setCustomerType(CustomerType.COMPANY);
-        customer.setExternalId(externalCustomer.getExternalId());
-        customer.setInternalId("45435");
-        return customer;
-    }
-
 }

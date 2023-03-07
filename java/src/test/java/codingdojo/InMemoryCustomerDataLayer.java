@@ -56,4 +56,9 @@ public class InMemoryCustomerDataLayer implements CustomerDataLayer {
                 .findFirst()
                 .orElse(null);
     }
+
+    @Override
+    public long countCustomers() {
+        return customers.size();
+    }
 }
