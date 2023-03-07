@@ -13,14 +13,14 @@ public class CustomerDataAccess {
         Customer matchByExternalId = this.customerDataLayer.findByExternalId(externalId);
         if (matchByExternalId != null) {
             matches.setCustomer(matchByExternalId);
-            matches.setMatchTerm("ExternalId");
+            matches.setMatchTerm(CustomerMatches.MatchTerm.EXTERNAL_ID);
             Customer matchByMasterId = this.customerDataLayer.findByMasterExternalId(externalId);
             if (matchByMasterId != null) matches.addDuplicate(matchByMasterId);
         } else {
             Customer matchByCompanyNumber = this.customerDataLayer.findByCompanyNumber(companyNumber);
             if (matchByCompanyNumber != null) {
                 matches.setCustomer(matchByCompanyNumber);
-                matches.setMatchTerm("CompanyNumber");
+                matches.setMatchTerm(CustomerMatches.MatchTerm.COMPANY_NUMBER);
             }
         }
 
@@ -31,7 +31,7 @@ public class CustomerDataAccess {
         CustomerMatches matches = new CustomerMatches();
         Customer matchByPersonalNumber = this.customerDataLayer.findByExternalId(externalId);
         matches.setCustomer(matchByPersonalNumber);
-        if (matchByPersonalNumber != null) matches.setMatchTerm("ExternalId");
+        if (matchByPersonalNumber != null) matches.setMatchTerm(CustomerMatches.MatchTerm.EXTERNAL_ID);
         return matches;
     }
 

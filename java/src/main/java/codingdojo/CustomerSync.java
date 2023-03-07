@@ -113,7 +113,7 @@ public class CustomerSync {
             throw new ConflictException("Existing customer for externalCustomer " + externalId + " already exists and is not a company");
         }
 
-        if ("ExternalId".equals(customerMatches.getMatchTerm())) {
+        if (customerMatches.isMatchingByExternalId()) {
             String customerCompanyNumber = customerMatches.getCustomer().getCompanyNumber();
             if (!companyNumber.equals(customerCompanyNumber)) {
                 customerMatches.getCustomer().setMasterExternalId(null);
@@ -121,7 +121,7 @@ public class CustomerSync {
                 customerMatches.setCustomer(null);
                 customerMatches.setMatchTerm(null);
             }
-        } else if ("CompanyNumber".equals(customerMatches.getMatchTerm())) {
+        } else if (customerMatches.isMatchingByCompanyNumber()) {
             String customerExternalId = customerMatches.getCustomer().getExternalId();
             if (customerExternalId != null && !externalId.equals(customerExternalId)) {
                 throw new ConflictException("Existing customer for externalCustomer " + companyNumber + " doesn't match external id " + externalId + " instead found " + customerExternalId );
