@@ -15,6 +15,13 @@ public class Customer {
     private CustomerType customerType;
     private String companyNumber;
 
+    public static Customer newCustomerWithExternalId(String externalId) {
+        Customer customer = new Customer();
+        customer.setExternalId(externalId);
+        customer.setMasterExternalId(externalId);
+        return customer;
+    }
+
     public void setExternalId(String externalId) {
         this.externalId = externalId;
     }
