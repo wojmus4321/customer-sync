@@ -13,6 +13,7 @@ public class TestData {
         externalCustomer.setCompanyNumber(null);
         externalCustomer.setShoppingLists(Collections.singletonList(new ShoppingList("lipstick", "blusher")));
         externalCustomer.setPreferredStore("Test Store 123");
+        externalCustomer.setBonusPointsBalance(100);
         return externalCustomer;
     }
 

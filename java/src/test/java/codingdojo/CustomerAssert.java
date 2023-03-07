@@ -49,4 +49,20 @@ public class CustomerAssert extends AbstractAssert<CustomerAssert, Customer> {
         return this;
     }
 
+    public CustomerAssert hasBonusPoints(ExternalCustomer externalCustomer) {
+        isNotNull();
+
+        Assertions.assertThat(actual.getBonusPointsBalance()).isEqualTo(externalCustomer.getBonusPointsBalance());
+
+        return this;
+    }
+
+    public CustomerAssert hasNoBonusPoints() {
+        isNotNull();
+
+        Assertions.assertThat(actual.getBonusPointsBalance()).isNull();
+
+        return this;
+    }
+
 }

@@ -45,7 +45,8 @@ public class CustomerSyncTest {
 
             assertThat(updatedCustomer)
                     .isPerson()
-                    .wasUpdatedFrom(externalCustomer);
+                    .wasUpdatedFrom(externalCustomer)
+                    .hasBonusPoints(externalCustomer);
         }
 
         @Test
@@ -70,7 +71,8 @@ public class CustomerSyncTest {
 
             assertThat(updatedCustomer)
                     .isPerson()
-                    .wasUpdatedFrom(externalCustomer);
+                    .wasUpdatedFrom(externalCustomer)
+                    .hasBonusPoints(externalCustomer);
         }
 
         @Test
@@ -114,7 +116,8 @@ public class CustomerSyncTest {
 
             assertThat(updatedCustomer)
                     .isCompany()
-                    .wasUpdatedFrom(externalCustomer);
+                    .wasUpdatedFrom(externalCustomer)
+                    .hasNoBonusPoints();
         }
 
         @Test
@@ -140,7 +143,8 @@ public class CustomerSyncTest {
             assertThat(updatedCustomer)
                     .isCompany()
                     .hasEmptyMasterExternalId()
-                    .wasUpdatedFrom(externalCustomer);
+                    .wasUpdatedFrom(externalCustomer)
+                    .hasNoBonusPoints();
         }
 
         @Test
@@ -166,12 +170,14 @@ public class CustomerSyncTest {
 
             assertThat(updatedCustomer)
                     .isCompany()
-                    .wasUpdatedFrom(externalCustomer);
+                    .wasUpdatedFrom(externalCustomer)
+                    .hasNoBonusPoints();
 
             Customer createdCustomer = db.findByCompanyNumber(matchingCustomer.getCompanyNumber());
 
             assertThat(createdCustomer)
-                    .isCompany();
+                    .isCompany()
+                    .hasNoBonusPoints();
         }
 
         @Test
@@ -227,7 +233,8 @@ public class CustomerSyncTest {
 
             assertThat(updatedCustomer)
                     .isCompany()
-                    .wasUpdatedFrom(externalCustomer);
+                    .wasUpdatedFrom(externalCustomer)
+                    .hasNoBonusPoints();
 
         }
 
@@ -253,10 +260,8 @@ public class CustomerSyncTest {
 
             assertThat(updatedCustomer)
                     .isCompany()
-                    .wasUpdatedFrom(externalCustomer);
-
+                    .wasUpdatedFrom(externalCustomer)
+                    .hasNoBonusPoints();
         }
-
-
     }
 }
